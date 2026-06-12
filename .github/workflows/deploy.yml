@@ -5,8 +5,11 @@ on:
     branches:
       - main
 
+# 👇 THIS EXPLICITLY FORCES GITHUB TO GRANT WRITE PERMISSIONS TO THE RUNNER
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   deploy:
@@ -18,7 +21,7 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22 # Explicitly pins standard active LTS environment
 
       - name: Install and Build Frontend Application
         run: |
