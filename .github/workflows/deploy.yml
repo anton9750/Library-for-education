@@ -3,7 +3,7 @@ name: Deploy Production Application to GitHub Pages
 on:
   push:
     branches:
-      - main # 👈 Remember to change this to "master" if your primary branch is called master
+      - main
 
 permissions:
   contents: read
@@ -17,15 +17,23 @@ concurrency:
 jobs:
   build_and_compile:
     runs-on: ubuntu-latest
+    #  👇 This tells GitHub to run all commands inside your frontend folder!
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - name: Checkout Repository Source
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            frontend
 
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Dependencies
         run: npm ci
@@ -36,7 +44,7 @@ jobs:
       - name: Upload Production Artifact Package
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: 'frontend/dist' # 👈 Pointing to frontend/dist
 
   deploy_to_web:
     environment:
