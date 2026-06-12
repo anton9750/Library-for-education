@@ -14,6 +14,9 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true # 👈 Forcefully bypasses the Node 20 runner deprecation completely
+
 jobs:
   build_and_compile:
     runs-on: ubuntu-latest
@@ -24,13 +27,13 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install Dependencies
+      - name: Install System Dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm install # 👈 Standard install handles local/remote environment drifts seamlessly
 
       - name: Compile Production Assets via Vite
         working-directory: frontend
