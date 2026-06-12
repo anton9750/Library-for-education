@@ -17,16 +17,12 @@ concurrency:
 jobs:
   build_and_compile:
     runs-on: ubuntu-latest
-    #  👇 This tells GitHub to run all commands inside your frontend folder!
     defaults:
       run:
-        working-directory: frontend
+        working-directory: frontend # 👈 Correctly executes all scripts here
     steps:
       - name: Checkout Repository Source
         uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            frontend
 
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
@@ -44,8 +40,8 @@ jobs:
       - name: Upload Production Artifact Package
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'frontend/dist' # 👈 Pointing to frontend/dist
-
+          path: 'frontend/dist' # 👈 Grabs the compiled build folder
+          
   deploy_to_web:
     environment:
       name: github-pages
