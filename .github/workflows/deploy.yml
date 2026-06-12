@@ -17,9 +17,6 @@ concurrency:
 jobs:
   build_and_compile:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend # 👈 Correctly executes all scripts here
     steps:
       - name: Checkout Repository Source
         uses: actions/checkout@v4
@@ -29,7 +26,6 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Dependencies
         run: npm ci
@@ -40,7 +36,7 @@ jobs:
       - name: Upload Production Artifact Package
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'frontend/dist' # 👈 Grabs the compiled build folder
+          path: './dist' # Vite builds straight to the root dist folder now!
           
   deploy_to_web:
     environment:
