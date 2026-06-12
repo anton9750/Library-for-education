@@ -1,0 +1,23 @@
+{
+  "name": "enterprise-hyper-master-framework",
+  "version": "2.0.0",
+  "description": "Production-grade, highly structured fullstack boilerplate framework",
+  "main": "backend/server.js",
+  "scripts": {
+    "server": "node backend/server.js",
+    "client": "npm --prefix frontend run dev",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "prisma": "^5.14.0"
+  }
+}

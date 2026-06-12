@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  enterprise_postgres_db:
+    image: postgres:15-alpine
+    container_name: enterprise_postgres_db_container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: enterprise_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_volume_allocation:/var/lib/postgresql/data
+    networks:
+      - core_backbone_network
+
+  enterprise_redis_cache:
+    image: redis:7-alpine
+    container_name: enterprise_redis_cache_container
+    ports:
+      - "6379:6379"
+    networks:
+      - core_backbone_network
+
+networks:
+  core_backbone_network:
+    driver: bridge
+
+volumes:
+  postgres_data_volume_allocation:
+    driver: local
