@@ -5,14 +5,17 @@ on:
     branches:
       - main
 
-# 👇 THIS EXPLICITLY FORCES GITHUB TO GRANT WRITE PERMISSIONS TO THE RUNNER
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
-  deploy:
+  build_and_compile:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository Source
@@ -21,16 +24,26 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: 22 # Explicitly pins standard active LTS environment
+          node-version: 22
 
-      - name: Install and Build Frontend Application
+      - name: Build Application
         run: |
           cd frontend
           npm install
           npm run build
 
-      - name: Deploy Compiled Assets to GitHub Pages Branch
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Production Artifact Package
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend/dist
+          path: 'frontend/dist' # 👈 Explicitly grabs your compiled folder directly
+
+  deploy_to_web:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build_and_compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish Assets Live to GitHub Pages Engine
+        id: deployment
+        uses: actions/deploy-pages@v4
