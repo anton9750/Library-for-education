@@ -1,0 +1,50 @@
+name: Deploy Production Application to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # 👈 Remember to change this to "master" if your primary branch is called master
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build_and_compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository Source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Compile Production Assets via Vite
+        run: npm run build
+
+      - name: Upload Production Artifact Package
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+  deploy_to_web:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build_and_compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish Assets Live to GitHub Pages Engine
+        id: deployment
+        uses: actions/deploy-pages@v4
