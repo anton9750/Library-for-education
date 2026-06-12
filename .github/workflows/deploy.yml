@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true # 👈 Forcefully bypasses the Node 20 runner deprecation completely
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build_and_compile:
@@ -28,12 +28,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Install System Dependencies
         working-directory: frontend
-        run: npm install # 👈 Standard install handles local/remote environment drifts seamlessly
+        run: npm install
 
       - name: Compile Production Assets via Vite
         working-directory: frontend
