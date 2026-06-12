@@ -6,19 +6,10 @@ on:
       - main
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  contents: write
 
 jobs:
-  build_and_compile:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository Source
@@ -29,26 +20,14 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install System Dependencies
-        working-directory: frontend
-        run: npm install
+      - name: Install and Build Frontend Application
+        run: |
+          cd frontend
+          npm install
+          npm run build
 
-      - name: Compile Production Assets via Vite
-        working-directory: frontend
-        run: npm run build
-
-      - name: Upload Production Artifact Package
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy Compiled Assets to GitHub Pages Branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: 'frontend/dist'
-          
-  deploy_to_web:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    needs: build_and_compile
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publish Assets Live to GitHub Pages Engine
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend/dist
