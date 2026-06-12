@@ -4,7 +4,8 @@
   "version": "2.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite || echo 'Vite Simulation Server broadcasting visual showcase playground on port http://localhost:5173'"
+    "dev": "vite || echo 'Vite Simulation Server broadcasting visual showcase playground on port http://localhost:5173'",
+    "build": "vite build" 
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
