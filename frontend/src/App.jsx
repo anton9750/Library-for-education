@@ -1,18 +1,22 @@
 import React, { useState } from "react";
 import { ENTERPRISE_REGISTRY } from "./snippets/SnippetWarehouse";
 import { ACADEMY_DATA } from "./snippets/AcademyData";
+// 1. Vi importerer din nye letvægts Code-Editor
+import CodeEditor from '@uiw/react-textarea-code-editor';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("marketplace");
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState(null);
 
-  // 🤖 Gemini Messaging Pipeline States
-  const [chatMessages, setChatMessages] = useState([
-    { role: 'model', text: 'Systems fully operational. How can I assist you with architecture optimizations today?' }
-  ]);
-  const [chatInput, setChatInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
+  // 🎨 AI Image Dashboard States (Erstatter gamle chat-states)
+  const [prompt, setPrompt] = useState('');
+  const [negativePrompt, setNegativePrompt] = useState('');
+  const [artStyle, setArtStyle] = useState('realistic');
+  const [scratchpad, setScratchpad] = useState('// Skriv dine modelnoter eller prompt-skabeloner her...\n');
+  const [pipelineLoading, setPipelineLoading] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState(null);
+  const [pipelineError, setPipelineError] = useState(null);
 
   const filteredSnippets = ENTERPRISE_REGISTRY.filter(item => {
     const query = searchQuery.toLowerCase().trim();
@@ -32,39 +36,35 @@ export default function App() {
     setTimeout(() => setCopiedId(null), 1500);
   };
 
-  // 🛰️ Forward Prompt Context Payload to the running backend proxy server
-  const handleSendChatPrompt = async (e) => {
+  // 🎨 🛰️ Håndterer afsendelse til Billed-pipeline på Node-serveren
+  const handleGenerateImage = async (e) => {
     e.preventDefault();
-    if (!chatInput.trim() || chatLoading) return;
+    if (!prompt.trim() || pipelineLoading) return;
 
-    const userText = chatInput;
-    setChatMessages(prev => [...prev, { role: 'user', text: userText }]);
-    setChatInput('');
-    setChatLoading(true);
-
+    setPipelineLoading(true);
+    setPipelineError(null);
     try {
-      // Directed explicitly to local network ecosystem container
-      const res = await fetch('http://localhost:5000/api/chat/gemini', {
+      const res = await fetch('http://localhost:5000/api/generate/image', {
         method: 'POST',
-        mode: 'cors', // 👈 CRITICAL FIX: Forces browser optimization for cross-origin tracking
+        mode: 'cors',
         headers: { 
           'Content-Type': 'application/json' 
         },
-        body: JSON.stringify({ prompt: userText }),
+        body: JSON.stringify({ prompt, negativePrompt, artStyle, scratchpad }),
       });
       
       const data = await res.json();
       
-      if (data.error) {
-        throw new Error(data.error);
+      if (data.success) {
+        setGeneratedImage(data.imageUrl);
+      } else {
+        throw new Error(data.error || 'Generering mislykkedes');
       }
-
-      setChatMessages(prev => [...prev, { role: 'model', text: data.text }]);
     } catch (err) {
-      console.error("Transmission Error:", err);
-      setChatMessages(prev => [...prev, { role: 'error', text: 'Pipeline connection broken. Ensure backend node server is running.' }]);
+      console.error("Pipeline Error:", err);
+      setPipelineError('Pipeline connection broken. Ensure backend node server is running.');
     } finally {
-      setChatLoading(false);
+      setPipelineLoading(false);
     }
   };
 
@@ -275,57 +275,93 @@ export default function App() {
           )}
         </div>
 
-        {/* RIGHT COLUMN SIDEBAR CHATBOX (4/12 Columns wide) */}
+        {/* 🎨 RIGHT COLUMN: ADAPTED TO AI IMAGE GENERATOR WORKSPACE (4/12 Columns wide) */}
         <div className="xl:col-span-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl h-[600px] flex flex-col sticky top-28 relative overflow-hidden">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col sticky top-28 relative overflow-hidden min-h-[650px]">
             <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
             
             <div className="border-b border-slate-800 pb-3 mb-4">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-                <h3 className="text-sm font-black font-mono uppercase tracking-wider text-slate-200">Gemini Co-Pilot</h3>
+                <h3 className="text-sm font-black font-mono uppercase tracking-wider text-slate-200">AI Image Pipeline</h3>
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">Query processing relay through local backend instance</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Custom layout configuration & parsing array controller</p>
             </div>
 
-            {/* Live Message Thread Wrapper */}
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1">
-              {chatMessages.map((msg, idx) => (
-                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] rounded-xl px-3.5 py-2 text-[12px] leading-relaxed font-mono whitespace-pre-wrap shadow-md ${
-                    msg.role === 'user'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none'
-                      : msg.role === 'error'
-                      ? 'bg-red-500/10 border border-red-500/20 text-red-400'
-                      : 'bg-slate-950 border border-slate-800 text-slate-300 rounded-bl-none'
-                  }`}>
-                    {msg.text}
+            {/* Input Form System */}
+            <form onSubmit={handleGenerateImage} className="space-y-4 flex-1 flex flex-col justify-between">
+              <div className="space-y-3 flex-1 overflow-y-auto pr-1 max-h-[380px]">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1 font-mono uppercase">Positive Prompt</label>
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Hvad vil du se i billedet? (f.eks. attractive anime woman)"
+                    className="w-full h-16 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 placeholder-slate-600 focus:border-blue-500 outline-none resize-none font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1 font-mono uppercase">Anti-Prompt (Negative)</label>
+                  <textarea
+                    value={negativePrompt}
+                    onChange={(e) => setNegativePrompt(e.target.value)}
+                    placeholder="Hvad skal undgås? (f.eks. ugly, deformed, extra limbs)"
+                    className="w-full h-16 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 placeholder-slate-600 focus:border-blue-500 outline-none resize-none font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1 font-mono uppercase">Art Style Visualizer</label>
+                  <select
+                    value={artStyle}
+                    onChange={(e) => setArtStyle(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs focus:border-blue-500 outline-none font-mono text-slate-300"
+                  >
+                    <option value="realistic">Casual Photo / Realistisk</option>
+                    <option value="anime">Anime / Manga Core</option>
+                    <option value="cyberpunk">Cyberpunk Neon</option>
+                    <option value="fantasy">Epic Fantasy Painting</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1 font-mono uppercase">Scratchpad Configuration</label>
+                  <div data-color-mode="dark" className="border border-slate-800 rounded-xl overflow-hidden text-[11px] font-mono">
+                    <CodeEditor
+                      value={scratchpad}
+                      language="js"
+                      onChange={(e) => setScratchpad(e.target.value)}
+                      padding={10}
+                      style={{ fontSize: 11, backgroundColor: "#020617", minHeight: '80px' }}
+                    />
                   </div>
                 </div>
-              ))}
-              {chatLoading && (
-                <div className="flex items-center gap-2 text-[10px] font-mono text-indigo-400 animate-pulse pl-1">
-                  <span>⚡ Thinking... contacting backend proxy...</span>
-                </div>
-              )}
-            </div>
+              </div>
 
-            {/* Input System */}
-            <form onSubmit={handleSendChatPrompt} className="flex gap-2 pt-2 border-t border-slate-800">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask me something about architecture..."
-                className="flex-1 bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 outline-none transition-all font-mono"
-                disabled={chatLoading}
-              />
+              {/* Output Preview Window */}
+              <div className="border border-slate-800 rounded-xl p-2 bg-slate-950 flex flex-col items-center justify-center min-h-[140px] relative overflow-hidden">
+                {generatedImage ? (
+                  <img src={generatedImage} alt="AI Generated" className="max-w-full h-28 object-cover rounded-lg shadow-md" />
+                ) : (
+                  <div className="text-center text-[10px] font-mono text-slate-500 px-4">
+                    {pipelineLoading ? (
+                      <span className="text-blue-400 animate-pulse">⚡ Tygger sig igennem prompts & scratchpad-data...</span>
+                    ) : pipelineError ? (
+                      <span className="text-red-400">{pipelineError}</span>
+                    ) : (
+                      "Billed-pipeline klar. Udfyld inputs og tryk generer."
+                    )}
+                  </div>
+                )}
+              </div>
+
               <button
                 type="submit"
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl px-4 py-2.5 transition-all duration-150 active:scale-95 disabled:opacity-40"
-                disabled={chatLoading}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-xl py-3 transition-all duration-150 active:scale-95 disabled:opacity-40"
+                disabled={pipelineLoading}
               >
-                Send
+                {pipelineLoading ? 'Kører pipeline...' : 'Generer AI Billede'}
               </button>
             </form>
           </div>
