@@ -1,28 +1,17 @@
 @import "tailwindcss";
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@theme {
+  /* Define the keyframes that loop through the rainbow colors */
+  @keyframes rainbow-fade {
+    0% { background-color: #ff0000; }    /* Red */
+    17% { background-color: #ff7f00; }   /* Orange */
+    33% { background-color: #ffff00; }   /* Yellow */
+    50% { background-color: #00ff00; }   /* Green */
+    67% { background-color: #0000ff; }   /* Blue */
+    83% { background-color: #4b0082; }   /* Indigo */
+    100% { background-color: #ff0000; }  /* Back to Red for a seamless loop */
+  }
 
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-30px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-slide-in {
-  animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* Create a custom animation utility class name */
+--animate-rainbow: rainbow-fade 35s linear infinite;
 }
